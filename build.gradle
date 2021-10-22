@@ -5,7 +5,7 @@ plugins {
 }
 
 group = 'systems.bdev'
-version = '1.0.0'
+version = null
 sourceCompatibility = '17'
 
 configurations {
