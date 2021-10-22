@@ -27,14 +27,14 @@ jobs:
     - name: Assemble with Gradle
       run: ./gradlew clean assemble
     - name: Upload Start Script
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/libs/start.bat
-          tag: ${{ github.ref }}
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: build/libs/start.bat
+        tag: ${{ github.ref }}
     - name: Upload Jar
-        uses: svenstaro/upload-release-action@v2
-        with:
-          repo_token: ${{ secrets.GITHUB_TOKEN }}
-          file: build/libs/vipicsv.jar
-          tag: ${{ github.ref }}
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: build/libs/vipicsv.jar
+        tag: ${{ github.ref }}
