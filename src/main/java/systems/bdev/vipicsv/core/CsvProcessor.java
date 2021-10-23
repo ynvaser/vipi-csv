@@ -18,6 +18,7 @@ import java.util.*;
 public class CsvProcessor {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("uuuu.MM.d H:mm");
     private static final CSVFormat CSV_FORMAT = CSVFormat.EXCEL.withDelimiter(';');
+    private static final String UTF8_BOM = "\uFEFF";
     private final long interval;
     private final List<CsvRecord> csvRecords;
 
@@ -91,7 +92,7 @@ public class CsvProcessor {
                     throw new RuntimeException("File " + file.getName() + " line " + record.getRecordNumber() + " isn't of length 3!");
                 }
                 CsvRecord csvRecord = new CsvRecord();
-                csvRecord.setCameraNumber(Long.parseLong(record.get(0)));
+                csvRecord.setCameraNumber(Long.parseLong(removeBOMIfPresent(record.get(0))));
                 csvRecord.setDateTime(LocalDateTime.from(DATE_TIME_FORMATTER.parse(record.get(1))));
                 csvRecord.setSpeciesName(record.get(2));
                 result.add(csvRecord);
@@ -101,5 +102,12 @@ public class CsvProcessor {
             throw new RuntimeException(e);
         }
         return result;
+    }
+
+    private String removeBOMIfPresent(String s) {
+        if (s.startsWith(UTF8_BOM)) {
+            return s.substring(1);
+        }
+        return s;
     }
 }

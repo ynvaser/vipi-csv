@@ -32,13 +32,16 @@ public class VipiCSVApplication implements CommandLineRunner {
             log.info("Files present in \"{}\", processing...", inputFolderPath);
             for (File file : inputFilesArray) {
                 CsvProcessor csvProcessor = new CsvProcessor(interval, file);
-                try (FileWriter fileWriter = new FileWriter(outputFolderPath.toString() + "\\out-" + file.getName())) {
+                String outputFileName = outputFolderPath.toString() + "\\out-" + file.getName();
+                try (FileWriter fileWriter = new FileWriter(outputFileName)) {
                     fileWriter.write(csvProcessor.getProcessedFileContents());
                 }
+                log.info("Output file {} created!", outputFileName);
             }
         } else {
             log.error("No files present in input directory: {}", inputFolderPath);
         }
+        log.info("Application finished, please check the output folder for results.");
     }
 
     private long askForInterval() {
