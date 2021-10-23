@@ -18,7 +18,7 @@ import java.util.*;
 public class CsvProcessor {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("uuuu.MM.d H:mm");
     private static final CSVFormat CSV_FORMAT = CSVFormat.EXCEL.withDelimiter(';');
-    private static final String UTF8_BOM = "\uFEFF";
+    private static final Character UTF8_BOM = '\uFEFF';
     private final long interval;
     private final List<CsvRecord> csvRecords;
 
@@ -72,7 +72,7 @@ public class CsvProcessor {
         StringBuffer stringBuffer = new StringBuffer();
         try (CSVPrinter printer = new CSVPrinter(stringBuffer, CSV_FORMAT)) {
             for (CsvRecord csvRecord : csvRecords) {
-                printer.printRecord(DATE_TIME_FORMATTER.format(csvRecord.getDateTime()), csvRecord.getResultColumn());
+                printer.printRecord(csvRecord.getCameraNumber(), DATE_TIME_FORMATTER.format(csvRecord.getDateTime()), csvRecord.getResultColumn());
             }
         } catch (IOException e) {
             log.error("Can't create CSV contents!", e);
@@ -105,7 +105,7 @@ public class CsvProcessor {
     }
 
     private String removeBOMIfPresent(String s) {
-        if (s.startsWith(UTF8_BOM)) {
+        if (UTF8_BOM.equals(s.charAt(0))) {
             return s.substring(1);
         }
         return s;
