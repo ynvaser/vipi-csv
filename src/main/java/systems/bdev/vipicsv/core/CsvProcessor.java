@@ -87,7 +87,7 @@ public class CsvProcessor {
             CSVParser parsedCsv = CSV_FORMAT
                     .parse(fileReader);
             for (CSVRecord record : parsedCsv) {
-                if (record.size() != 4) {
+                if (record.size() < 3) {
                     log.error("File {} line {} isn't of length 3!", file.getName(), record.getRecordNumber());
                     throw new RuntimeException("File " + file.getName() + " line " + record.getRecordNumber() + " isn't of length 3!");
                 }
