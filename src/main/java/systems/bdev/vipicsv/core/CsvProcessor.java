@@ -7,8 +7,10 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -81,21 +83,25 @@ public class CsvProcessor {
         return stringBuffer.toString();
     }
 
-    private List<CsvRecord> process(File file) {
+    private List<CsvRecord> process(final File file) {
         List<CsvRecord> result = new ArrayList<>();
-        try (FileReader fileReader = new FileReader(file)) {
+        try (InputStreamReader fileReader = new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8.newDecoder())) {
             CSVParser parsedCsv = CSV_FORMAT
                     .parse(fileReader);
             for (CSVRecord record : parsedCsv) {
                 if (record.size() != 3) {
                     log.error("File {} line {} isn't of length 3!", file.getName(), record.getRecordNumber());
                     throw new RuntimeException("File " + file.getName() + " line " + record.getRecordNumber() + " isn't of length 3!");
+                } else if ("Site_ID".equalsIgnoreCase(record.get(0))) {
+                    log.info("Skipping header.");
+                } else {
+                    CsvRecord csvRecord = new CsvRecord();
+                    validateRecord(record);
+                    csvRecord.setCameraNumber(Long.parseLong(removeBOMIfPresent(record.get(0))));
+                    csvRecord.setDateTime(LocalDateTime.from(DATE_TIME_FORMATTER.parse(record.get(1))));
+                    csvRecord.setSpeciesName(record.get(2));
+                    result.add(csvRecord);
                 }
-                CsvRecord csvRecord = new CsvRecord();
-                csvRecord.setCameraNumber(Long.parseLong(removeBOMIfPresent(record.get(0))));
-                csvRecord.setDateTime(LocalDateTime.from(DATE_TIME_FORMATTER.parse(record.get(1))));
-                csvRecord.setSpeciesName(record.get(2));
-                result.add(csvRecord);
             }
         } catch (IOException e) {
             log.error("Couldn't open file: {}", file.getName(), e);
@@ -104,10 +110,21 @@ public class CsvProcessor {
         return result;
     }
 
-    private String removeBOMIfPresent(String s) {
-        if (UTF8_BOM.equals(s.charAt(0))) {
-            return s.substring(1);
+    private void validateRecord(CSVRecord record) {
+        if (record.get(0).isBlank()) {
+            throw new IllegalArgumentException("No camera number on line: " + record.getRecordNumber());
+        } else if (record.get(1).isBlank()) {
+            throw new IllegalArgumentException("No date and time on line: " + record.getRecordNumber());
+        } else if (record.get(2).isBlank()) {
+            throw new IllegalArgumentException("No species on line: " + record.getRecordNumber());
         }
-        return s;
+    }
+
+    private String removeBOMIfPresent(String s) {
+        String prunedString = s;
+        if (UTF8_BOM.equals(s.charAt(0))) {
+            prunedString = s.substring(1);
+        }
+        return prunedString.replaceAll("[^\\d.]", "");
     }
 }

@@ -6,17 +6,20 @@ import org.apache.commons.csv.CSVPrinter;
 import org.apache.commons.csv.CSVRecord;
 
 import java.io.File;
-import java.io.FileReader;
+import java.io.FileInputStream;
 import java.io.IOException;
-import java.time.LocalDate;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.YearMonth;
+import java.time.format.DateTimeFormatter;
 import java.util.*;
 import java.util.stream.Collectors;
 
 @Slf4j
 public class MatrixCsvProcessor extends CsvProcessor {
     private static final String IN_PROGRESS = "folyamatban";
+    private static final DateTimeFormatter DATE_FORMATTER = DateTimeFormatter.ofPattern("uuuu.MM.dd");
 
     private final Map<Tuple<Long, YearMonth>, Map<String, Integer>> resultMap = new TreeMap<>();
     private final Set<String> speciesInOrder = new TreeSet<>();
@@ -29,7 +32,7 @@ public class MatrixCsvProcessor extends CsvProcessor {
 
     private Map<Long, Tuple<YearMonth, YearMonth>> parseCameraActivityFile(File cameraActivityFile) {
         Map<Long, Tuple<YearMonth, YearMonth>> result = new HashMap<>();
-        try (FileReader fileReader = new FileReader(cameraActivityFile)) {
+        try (InputStreamReader fileReader = new InputStreamReader(new FileInputStream(cameraActivityFile), StandardCharsets.UTF_8.newDecoder())) {
             CSVParser parsedCsv = CSV_FORMAT
                     .parse(fileReader);
             long i = 0;
@@ -37,12 +40,15 @@ public class MatrixCsvProcessor extends CsvProcessor {
                 if (record.size() != 2) {
                     log.error("Camera activity file {} line {} isn't of length 2!", cameraActivityFile.getName(), record.getRecordNumber());
                     throw new RuntimeException("Camera activity file " + cameraActivityFile.getName() + " line " + record.getRecordNumber() + " isn't of length 2!");
+                } else if (record.get(0).contains("kihely")) {
+                    log.info("Skipping header");
+                } else {
+                    String to = record.get(1);
+                    if (IN_PROGRESS.equalsIgnoreCase(to)) {
+                        to = "2077.01.01";
+                    }
+                    result.put(++i, new Tuple<>(YearMonth.from(DATE_FORMATTER.parse(record.get(0))), YearMonth.from(DATE_FORMATTER.parse(to))));
                 }
-                String to = record.get(1);
-                if (IN_PROGRESS.equalsIgnoreCase(to)) {
-                    to = "2077.01.01";
-                }
-                result.put(++i, new Tuple<>(YearMonth.from(LocalDate.parse(record.get(0))), YearMonth.from(LocalDate.parse(to))));
             }
         } catch (IOException e) {
             log.error("Couldn't open file: {}", cameraActivityFile.getName(), e);
@@ -54,7 +60,7 @@ public class MatrixCsvProcessor extends CsvProcessor {
     @Override
     public String getProcessedFileContents() {
         populateResultColumn(createSortedResultHolder());
-        List<CsvRecord> duplicateDetections = csvRecords.stream().filter(csvRecord -> csvRecord.getResultColumn() != null).collect(Collectors.toList());
+        List<CsvRecord> duplicateDetections = csvRecords.stream().filter(csvRecord -> csvRecord.getResultColumn() != null && !csvRecord.getResultColumn().isBlank()).collect(Collectors.toList());
         csvRecords.removeAll(duplicateDetections);
         populateMatrixWithNA();
         populateMatrixWithDetections();
