@@ -39,4 +39,10 @@ task moveStartScript(type: Copy) {
 	into 'build/libs'
 }
 
+task moveStartMatrixScript(type: Copy) {
+	from 'scripts/startMatrix.bat'
+	into 'build/libs'
+}
+
 assemble.finalizedBy(moveStartScript)
+assemble.finalizedBy(moveStartMatrixScript)
