@@ -5,6 +5,7 @@ import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import systems.bdev.vipicsv.core.CsvProcessor;
+import systems.bdev.vipicsv.core.MatrixCsvProcessor;
 
 import java.io.Console;
 import java.io.File;
@@ -23,15 +24,23 @@ public class VipiCSVApplication implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        boolean isMatrixUseCase = args.length > 1 && "matrix".equalsIgnoreCase(args[1]);
         long interval = askForInterval();
         File jarLocation = getJarLocation(args[0]);
         Path inputFolderPath = createFolderIfNeeded(jarLocation, "\\input");
         Path outputFolderPath = createFolderIfNeeded(jarLocation, "\\output");
         File[] inputFilesArray = inputFolderPath.toFile().listFiles();
+
+        Path cameraActivityIntervalPath = isMatrixUseCase ? createFolderIfNeeded(jarLocation, "\\camerainfo") : null;
+        File cameraActivityFolder = isMatrixUseCase ? cameraActivityIntervalPath.toFile() : null;
+        File cameraActivityFile = isMatrixUseCase ? new File(cameraActivityFolder, "cameras.txt") : null;
+        if (isMatrixUseCase && !cameraActivityFile.exists()) {
+            throw new IllegalStateException("Please provide the following file: .../camerainfo/cameras.txt");
+        }
         if (inputFilesArray != null && inputFilesArray.length != 0) {
             log.info("Files present in \"{}\", processing...", inputFolderPath);
             for (File file : inputFilesArray) {
-                CsvProcessor csvProcessor = new CsvProcessor(interval, file);
+                CsvProcessor csvProcessor = isMatrixUseCase ? new MatrixCsvProcessor(interval, file, cameraActivityFile) : new CsvProcessor(interval, file);
                 String outputFileName = outputFolderPath.toString() + "\\out-" + file.getName();
                 try (FileWriter fileWriter = new FileWriter(outputFileName)) {
                     fileWriter.write(csvProcessor.getProcessedFileContents());

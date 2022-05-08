@@ -1,2 +1,2 @@
 SET mypath=%~dp0
-java -jar vipicsv.jar %mypath%
+java -Xmx1G -jar vipicsv.jar %mypath%

@@ -17,10 +17,10 @@ import java.util.*;
 @Slf4j
 public class CsvProcessor {
     private static final DateTimeFormatter DATE_TIME_FORMATTER = DateTimeFormatter.ofPattern("uuuu.MM.d H:mm");
-    private static final CSVFormat CSV_FORMAT = CSVFormat.EXCEL.withDelimiter(';');
+    protected static final CSVFormat CSV_FORMAT = CSVFormat.EXCEL.withDelimiter(';');
     private static final Character UTF8_BOM = '\uFEFF';
     private final long interval;
-    private final List<CsvRecord> csvRecords;
+    protected final List<CsvRecord> csvRecords;
 
     public CsvProcessor(long interval, File file) {
         this.interval = interval;
@@ -33,7 +33,7 @@ public class CsvProcessor {
         return createCsvContents(csvRecords);
     }
 
-    private Map<Long, Map<String, List<CsvRecord>>> createSortedResultHolder() {
+    protected Map<Long, Map<String, List<CsvRecord>>> createSortedResultHolder() {
         Map<Long, Map<String, List<CsvRecord>>> resultHolder = new HashMap<>();
         for (CsvRecord record : csvRecords) {
             Long cameraNumber = record.getCameraNumber();
@@ -52,7 +52,7 @@ public class CsvProcessor {
         return resultHolder;
     }
 
-    private void populateResultColumn(Map<Long, Map<String, List<CsvRecord>>> resultHolder) {
+    protected void populateResultColumn(Map<Long, Map<String, List<CsvRecord>>> resultHolder) {
         resultHolder
                 .values()
                 .forEach(speciesMap -> speciesMap
@@ -87,7 +87,7 @@ public class CsvProcessor {
             CSVParser parsedCsv = CSV_FORMAT
                     .parse(fileReader);
             for (CSVRecord record : parsedCsv) {
-                if (record.size() < 3) {
+                if (record.size() != 3) {
                     log.error("File {} line {} isn't of length 3!", file.getName(), record.getRecordNumber());
                     throw new RuntimeException("File " + file.getName() + " line " + record.getRecordNumber() + " isn't of length 3!");
                 }

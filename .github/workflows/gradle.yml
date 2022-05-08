@@ -32,6 +32,12 @@ jobs:
         repo_token: ${{ secrets.GITHUB_TOKEN }}
         file: build/libs/start.bat
         tag: ${{ github.ref }}
+    - name: Upload Matrix Start Script
+      uses: svenstaro/upload-release-action@v2
+      with:
+        repo_token: ${{ secrets.GITHUB_TOKEN }}
+        file: build/libs/startMatrix.bat
+        tag: ${{ github.ref }}
     - name: Upload Jar
       uses: svenstaro/upload-release-action@v2
       with:
