@@ -37,17 +37,23 @@ public class MatrixCsvProcessor extends CsvProcessor {
                     .parse(fileReader);
             long i = 0;
             for (CSVRecord record : parsedCsv) {
-                if (record.size() != 2) {
-                    log.error("Camera activity file {} line {} isn't of length 2!", cameraActivityFile.getName(), record.getRecordNumber());
+                if (record.size() != 2 && record.size() != 3) {
+                    log.error("Camera activity file {} line {} isn't of length 2 or 3!", cameraActivityFile.getName(), record.getRecordNumber());
                     throw new RuntimeException("Camera activity file " + cameraActivityFile.getName() + " line " + record.getRecordNumber() + " isn't of length 2!");
-                } else if (record.get(0).contains("kihely")) {
+                } else if (record.get(0).contains("kihely") || record.get(1).contains("kihely")) {
                     log.info("Skipping header");
                 } else {
-                    String to = record.get(1);
+                    long siteId = ++i;
+                    boolean isSiteIdSpecified = record.size() == 3;
+                    if (isSiteIdSpecified) {
+                        siteId = Integer.parseInt(record.get(0));
+                    }
+                    String to = record.get(isSiteIdSpecified ? 2 : 1).strip();
                     if (IN_PROGRESS.equalsIgnoreCase(to)) {
                         to = "2077.01.01";
                     }
-                    result.put(++i, new Tuple<>(YearMonth.from(DATE_FORMATTER.parse(record.get(0))), YearMonth.from(DATE_FORMATTER.parse(to))));
+                    result.put(siteId, new Tuple<>(YearMonth.from(DATE_FORMATTER.parse(record.get(isSiteIdSpecified ? 1 : 0))), YearMonth.from(DATE_FORMATTER.parse(to))));
+
                 }
             }
         } catch (IOException e) {
